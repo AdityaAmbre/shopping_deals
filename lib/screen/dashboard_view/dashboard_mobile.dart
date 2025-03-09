@@ -14,6 +14,7 @@ class DashboardMobile extends StatelessWidget {
       appBar: _appBar(context, viewModel),
       drawer: _drawer(context, viewModel),
       body: _body(context, viewModel),
+      floatingActionButton: _floatingAction(context, viewModel),
     );
   }
 
@@ -131,10 +132,12 @@ class DashboardMobile extends StatelessWidget {
                               children: [
                                 Flexible(
                                   flex: 1,
-                                    child: Image.network(
-                                      viewModel.dealsList?[index].imageMedium ?? "",
-                                      fit: BoxFit.contain,
-                                    ),
+                                  child: CachedNetworkImage(
+                                    imageUrl: viewModel.dealsList?[index].imageMedium ?? "",
+                                    placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                                    errorWidget: (context, url, error) => const Icon(Icons.error),
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
@@ -292,6 +295,28 @@ class DashboardMobile extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _floatingAction(BuildContext context, DashboardViewModel viewModel) {
+    return FloatingActionButton(
+      onPressed: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Flutter - Shopping Deals!'),
+            backgroundColor: ResColors.primary,
+          ),
+        );
+      },
+      backgroundColor: ResColors.deepOrange,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(50.0),
+      ),
+      child: Icon(
+        Icons.currency_rupee_sharp,
+        size: 25,
+        color: ResColors.white,
+      ),
     );
   }
 }

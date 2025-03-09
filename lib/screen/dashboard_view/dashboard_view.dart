@@ -7,6 +7,7 @@ import 'package:shopping_deals/res/res_colors.dart';
 import 'package:shopping_deals/constant/constant.dart';
 import 'package:shopping_deals/widgets/list_tiles.dart';
 import 'package:responsive_builder/responsive_builder.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shopping_deals/screen/dashboard_view/dashboard_view_model.dart';
 
 part 'dashboard_mobile.dart';

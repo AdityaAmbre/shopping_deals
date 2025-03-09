@@ -1,23 +1,30 @@
-# shopping_deals
+# Flutter - Shopping Deals
+
+![Shopping Deals](preview.png)
+
+Version - 1.0.0
+
+## Getting Started
 A demo Flutter application showcasing shopping deals
 
-## Flutter SDK Version
+### Flutter SDK Version
 
+```
 3.24.3
+```
 
-## Dart SDK Version
+### Dart SDK Version
 
+```
 3.5.3
+```
 
-### Getting Started
+## Author
 
-This project is a starting point for a Flutter application.
+- **[Aditya Ambre](https://github.com/AdityaAmbre)**
 
-A few resources to get you started if this is your first Flutter project:
+## License
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+This project is licensed under the Apache-2.0 License - see the [LICENSE.md](LICENSE) file for details.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Copyrights © - 2025 Aditya Ambre. │ All Rights Reserved.

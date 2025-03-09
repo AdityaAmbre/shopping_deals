@@ -53,6 +53,13 @@ class DashboardViewModel extends BaseViewModel {
   /// Tab Controller
   void initTabController(TickerProvider vsync) {
     tabController = TabController(length: tabList?.length ?? 0, vsync: vsync);
+    tabController?.addListener(() {
+      if (tabController !=null) {
+        if (!tabController!.indexIsChanging) {
+          onTabAction(tabController!.index);
+        }
+      }
+    },);
   }
 
   void addScrollControllerListener() async {
@@ -89,63 +96,57 @@ class DashboardViewModel extends BaseViewModel {
   }
 
   /// Tab Click Action
-  void onTabAction(int index) async {
-    clearResponseModel();
-    tabController?.animateTo(index);
-    Logger.log("DashboardViewModel TAB", "$index");
-    switch(index) {
-      case 0:
-        if (currentTabIndex != 0) {
-          currentTabIndex = 0;
-          dealsList = [];
-        }
-        // clearResponseModel();
-        await onApiCall(
-            hostUrl: Constant.baseTopURL,
-            perPage: perPage,
-            pageNumber: pageNumber,
-            fields: Constant.fields
-        );
-        break;
-      case 1:
-        if (currentTabIndex != 1) {
-          currentTabIndex = 1;
-          dealsList = [];
-        }
-        // clearResponseModel();
-        await onApiCall(
-            hostUrl: Constant.basePopularURL,
-            perPage: perPage,
-            pageNumber: pageNumber,
-            fields: Constant.fields
-        );
-        break;
-      case 2:
-        if (currentTabIndex != 2) {
-          currentTabIndex = 2;
-          dealsList = [];
-        }
-        // clearResponseModel();
-        await onApiCall(
-            hostUrl: Constant.baseFeaturedURL,
-            perPage: perPage,
-            pageNumber: pageNumber,
-            fields: Constant.fields
-        );
-        break;
-      default:
-        if (currentTabIndex != 1) {
-          currentTabIndex = 1;
-          dealsList = [];
-        }
-        // clearResponseModel();
-        await onApiCall(
-            hostUrl: Constant.baseTopURL,
-            perPage: perPage,
-            pageNumber: pageNumber,
-            fields: Constant.fields
-        );
-        break;
+  void onTabAction(int index, {bool isRefresh = false}) async {
+    if (index != currentTabIndex || isRefresh) {
+      clearResponseModel();
+      tabController?.animateTo(index);
+      Logger.log("DashboardViewModel TAB", "$index");
+      switch(index) {
+        case 0:
+          if (currentTabIndex != 0) {
+            currentTabIndex = 0;
+          }
+          await onApiCall(
+              hostUrl: Constant.baseTopURL,
+              perPage: perPage,
+              pageNumber: pageNumber,
+              fields: Constant.fields
+          );
+          break;
+        case 1:
+          if (currentTabIndex != 1) {
+            currentTabIndex = 1;
+          }
+          await onApiCall(
+              hostUrl: Constant.basePopularURL,
+              perPage: perPage,
+              pageNumber: pageNumber,
+              fields: Constant.fields
+          );
+          break;
+        case 2:
+          if (currentTabIndex != 2) {
+            currentTabIndex = 2;
+          }
+          await onApiCall(
+              hostUrl: Constant.baseFeaturedURL,
+              perPage: perPage,
+              pageNumber: pageNumber,
+              fields: Constant.fields
+          );
+          break;
+        default:
+          if (currentTabIndex != 1) {
+            currentTabIndex = 1;
+          }
+          await onApiCall(
+              hostUrl: Constant.baseTopURL,
+              perPage: perPage,
+              pageNumber: pageNumber,
+              fields: Constant.fields
+          );
+          break;
+      }
     }
   }
 
@@ -192,6 +193,7 @@ class DashboardViewModel extends BaseViewModel {
         onAboutTapAction();
         break;
       default:
+        onDashboardTapAction(0);
         break;
     }
   }
@@ -203,7 +205,7 @@ class DashboardViewModel extends BaseViewModel {
 
   Future<void> onRefreshApiAction() async {
     int index = currentTabIndex;
-    onTabAction(index);
+    onTabAction(index, isRefresh: true);
   }
 
   void onTopTapAction(int index) {
@@ -267,17 +269,12 @@ class DashboardViewModel extends BaseViewModel {
           if (dealsList!.length > 1) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               scrollController.jumpTo(previousOffset);
-              // scrollController.animateTo(
-              //   previousOffset,
-              //   duration: const Duration(milliseconds: 100),
-              //   curve: Curves.linear,
-              // );
             });
           }
         }
       }
       notifyListeners();
-      Logger.log("==> Deals Length: ", "${dealsList?.length ?? 0}");
+      Logger.log("Deals Length: ", "${dealsList?.length ?? 0}");
     } else {
       Logger.log("DashboardViewModel API", "No data found");
       if (context.mounted) {
@@ -298,8 +295,6 @@ class DashboardViewModel extends BaseViewModel {
     perPage = 10;
     pageNumber = 1;
     previousOffset = 0;
-    // dispose();
-    // addScrollControllerListener();
     if (dealsModel != null) {
       dealsModel = null;
     }
@@ -310,27 +305,22 @@ class DashboardViewModel extends BaseViewModel {
     }
   }
 
+  void onFABAction() {
+    Logger.log("DashboardViewModel FAB", "Floating Action Button!");
+  }
+
+  bool showNewTabTapLoader() {
+    if (dealsList == null || dealsList == []) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   bool showPaginationLoader() {
     if (dealsList != null) {
-      if (dealsList!.isNotEmpty) {
-        if (dealsList!.length > 1) {
-          // WidgetsBinding.instance.addPostFrameCallback((_) {
-          //   scrollController.animateTo(
-          //       previousOffset,
-          //       duration: const Duration(microseconds: 10),
-          //       curve: Curves.linear
-          //   );
-          // });
-        }
-      }
-    }
-    if (dealsList != null) {
-      if (dealsList!.isNotEmpty) {
-        if (isLoading == true) {
-          return true;
-        } else {
-          return false;
-        }
+      if (dealsList!.isNotEmpty && isLoading == true) {
+        return true;
       } else {
         return false;
       }
@@ -339,9 +329,17 @@ class DashboardViewModel extends BaseViewModel {
     }
   }
 
-  bool showNewTabTapLoader() {
-    if (dealsList == null || dealsList == []) {
-      return true;
+  bool showPaginationEndedText() {
+    if (dealsModel != null) {
+      if (dealsModel!.deals != null) {
+        if (dealsModel!.deals!.isEmpty) {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
     } else {
       return false;
     }
@@ -559,22 +557,7 @@ class DashboardViewModel extends BaseViewModel {
   @override
   void dispose() {
     scrollController.dispose();
+    tabController?.dispose();
     super.dispose();
-  }
-
-  bool showPaginationEndedText() {
-    if (dealsList != null) {
-      if (dealsList!.isNotEmpty) {
-        if (dealsModel == null) {
-          return true;
-        } else {
-          return false;
-        }
-      } else {
-        return false;
-      }
-    } else {
-      return false;
-    }
   }
 }

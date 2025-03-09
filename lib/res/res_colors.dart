@@ -8,5 +8,5 @@ class ResColors{
   static Color black = Colors.black12;
   static Color grey = Colors.grey;
   static Color deepOrange = Colors.deepOrange;
-  static Color iconColor = Colors.black87;
+  static Color iconColor = const Color.fromARGB(200, 60, 60, 60);
 }
