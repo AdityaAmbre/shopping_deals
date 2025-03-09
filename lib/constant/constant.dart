@@ -10,6 +10,10 @@ class Constant {
   static const String homePage = "Deals";
 
   /// Host URLs
+  static const String baseTopURL = "http://stagingauth.desidime.com/v4/home/new";
+  static const String basePopularURL = "http://stagingauth.desidime.com/v4/home/discussed";
+  static const String baseFeaturedURL = "http://stagingauth.desidime.com/v4/home/discussed";
+  static const String fields = "id,created_at,created_at_in_millis,image_medium,comments_count,store{name}";
   static const String topFirstURL = "http://stagingauth.desidime.com/v4/home/new?per_page=10&page=1&fields=id,created_at,created_at_in_millis,image_medium,comments_count,store%7Bname";
   static const String popularSecondURL = "http://stagingauth.desidime.com/v4/home/discussed?per_page=10&page=1&fields=id,created_at,created_at_in_millis,image_medium,comments_count,store%7Bname";
   static const String featuredThirdURL = "http://stagingauth.desidime.com/v4/home/discussed?per_page=10&page=1&fields=id,created_at,created_at_in_millis,image_medium,comments_count,store%7Bname";

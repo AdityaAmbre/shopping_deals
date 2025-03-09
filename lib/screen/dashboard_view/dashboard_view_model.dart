@@ -9,18 +9,22 @@ import 'package:shopping_deals/widgets/dialog.dart';
 import 'package:shopping_deals/constant/constant.dart';
 import 'package:shopping_deals/model/deals_model.dart';
 
-enum TABS {TOP, POPULAR, FEATURED}
-
 class DashboardViewModel extends BaseViewModel {
   final BuildContext context;
   bool isLoading = false;
+  int perPage = 10;
+  int pageNumber = 1;
+  int currentTabIndex = 0;
+  double previousOffset = 0;
   List<String>? tabList = [];
   List<String>? drawerTitleList = [];
   List<IconData>? drawerIconList = [];
+  List<Deals>? dealsList = [];
   DealsModel? dealsModel;
 
   Api api = Api();
   TabController? tabController;
+  ScrollController scrollController = ScrollController();
 
   DashboardViewModel(this.context);
 
@@ -29,7 +33,13 @@ class DashboardViewModel extends BaseViewModel {
     Logger.logTitle("DashboardViewModel INIT", "init ${Constant.appName}");
     initPreferences();
     initTabController(vsync);
-    await onApiCall(hostUrl: Constant.topFirstURL);
+    addScrollControllerListener();
+    await onApiCall(
+      hostUrl: Constant.baseTopURL,
+      perPage: perPage,
+      pageNumber: pageNumber,
+      fields: Constant.fields
+    );
   }
 
   /// Init Preferences
@@ -45,23 +55,96 @@ class DashboardViewModel extends BaseViewModel {
     tabController = TabController(length: tabList?.length ?? 0, vsync: vsync);
   }
 
+  void addScrollControllerListener() async {
+    previousOffset = 0;
+    scrollController.addListener(() {
+      previousOffset = scrollController.offset;
+      if (scrollController.position.pixels == scrollController.position.maxScrollExtent) {
+        onPaginationApiCall();
+      }
+    },);
+  }
+
+  void onPaginationApiCall () async {
+    String baseUrl  = getCurrentTabBaseUrl(currentTabIndex);
+    await onApiCall(
+        hostUrl: baseUrl,
+        perPage: perPage,
+        pageNumber: pageNumber,
+        fields: Constant.fields
+    );
+  }
+
+  String getCurrentTabBaseUrl(int currentTabIndex) {
+    switch(currentTabIndex) {
+      case 0:
+        return Constant.baseTopURL;
+      case 1:
+        return Constant.basePopularURL;
+      case 2:
+        return Constant.baseFeaturedURL;
+      default:
+        return Constant.baseTopURL;
+    }
+  }
+
   /// Tab Click Action
   void onTabAction(int index) async {
+    clearResponseModel();
     tabController?.animateTo(index);
     Logger.log("DashboardViewModel TAB", "$index");
     switch(index) {
       case 0:
-        await onApiCall(hostUrl: Constant.topFirstURL);
+        if (currentTabIndex != 0) {
+          currentTabIndex = 0;
+          dealsList = [];
+        }
+        // clearResponseModel();
+        await onApiCall(
+            hostUrl: Constant.baseTopURL,
+            perPage: perPage,
+            pageNumber: pageNumber,
+            fields: Constant.fields
+        );
         break;
       case 1:
-        await onApiCall(hostUrl: Constant.popularSecondURL);
+        if (currentTabIndex != 1) {
+          currentTabIndex = 1;
+          dealsList = [];
+        }
+        // clearResponseModel();
+        await onApiCall(
+            hostUrl: Constant.basePopularURL,
+            perPage: perPage,
+            pageNumber: pageNumber,
+            fields: Constant.fields
+        );
         break;
       case 2:
-        await onApiCall(hostUrl: Constant.featuredThirdURL);
+        if (currentTabIndex != 2) {
+          currentTabIndex = 2;
+          dealsList = [];
+        }
+        // clearResponseModel();
+        await onApiCall(
+            hostUrl: Constant.baseFeaturedURL,
+            perPage: perPage,
+            pageNumber: pageNumber,
+            fields: Constant.fields
+        );
         break;
       default:
-        onTabAction(0);
-        await onApiCall(hostUrl: Constant.topFirstURL);
+        if (currentTabIndex != 1) {
+          currentTabIndex = 1;
+          dealsList = [];
+        }
+        // clearResponseModel();
+        await onApiCall(
+            hostUrl: Constant.baseTopURL,
+            perPage: perPage,
+            pageNumber: pageNumber,
+            fields: Constant.fields
+        );
         break;
     }
   }
@@ -115,7 +198,11 @@ class DashboardViewModel extends BaseViewModel {
 
   void onDashboardTapAction(int index) async {
     Logger.log("DashboardViewModel Drawer", "onDashboardTapAction");
-    clearResponseModel();
+    onTabAction(index);
+  }
+
+  Future<void> onRefreshApiAction() async {
+    int index = currentTabIndex;
     onTabAction(index);
   }
 
@@ -140,7 +227,12 @@ class DashboardViewModel extends BaseViewModel {
   }
 
   /// Handle API Call
-  Future<void> onApiCall({required String hostUrl}) async {
+  Future<void> onApiCall({
+    required String hostUrl,
+    required int perPage,
+    required int pageNumber,
+    required String fields
+  }) async {
     final Map<String, String> headers = {
       Constant.headerKey: Constant.headerValue
     };
@@ -148,15 +240,44 @@ class DashboardViewModel extends BaseViewModel {
     // API Call
     toggleLoading();
     Map<String, dynamic>? data = await api.apiCallHttpGet(
-        hostUrl,
+        baseUrl: hostUrl,
+        perPage: perPage,
+        pageNumber: pageNumber,
+        fields: fields,
         headersList: headers
     );
     toggleLoading();
 
     if (data != null) {
-      clearResponseModel();
       dealsModel = DealsModel.fromJson(data);
+      if (dealsModel != null) {
+        if (dealsModel!.deals != null) {
+          if (dealsModel!.deals!.isNotEmpty) {
+            if (this.pageNumber > 1) {
+              dealsList?.addAll(dealsModel!.deals ?? []);
+            } else{
+              dealsList = dealsModel!.deals ?? [];
+            }
+            this.pageNumber++;
+          }
+        }
+      }
+      if (dealsList != null) {
+        if (dealsList!.isNotEmpty) {
+          if (dealsList!.length > 1) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              scrollController.jumpTo(previousOffset);
+              // scrollController.animateTo(
+              //   previousOffset,
+              //   duration: const Duration(milliseconds: 100),
+              //   curve: Curves.linear,
+              // );
+            });
+          }
+        }
+      }
       notifyListeners();
+      Logger.log("==> Deals Length: ", "${dealsList?.length ?? 0}");
     } else {
       Logger.log("DashboardViewModel API", "No data found");
       if (context.mounted) {
@@ -174,8 +295,55 @@ class DashboardViewModel extends BaseViewModel {
   }
 
   void clearResponseModel() {
+    perPage = 10;
+    pageNumber = 1;
+    previousOffset = 0;
+    // dispose();
+    // addScrollControllerListener();
     if (dealsModel != null) {
       dealsModel = null;
+    }
+    if (dealsList != null){
+      if (dealsList!.isNotEmpty) {
+        dealsList = [];
+      }
+    }
+  }
+
+  bool showPaginationLoader() {
+    if (dealsList != null) {
+      if (dealsList!.isNotEmpty) {
+        if (dealsList!.length > 1) {
+          // WidgetsBinding.instance.addPostFrameCallback((_) {
+          //   scrollController.animateTo(
+          //       previousOffset,
+          //       duration: const Duration(microseconds: 10),
+          //       curve: Curves.linear
+          //   );
+          // });
+        }
+      }
+    }
+    if (dealsList != null) {
+      if (dealsList!.isNotEmpty) {
+        if (isLoading == true) {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
+  bool showNewTabTapLoader() {
+    if (dealsList == null || dealsList == []) {
+      return true;
+    } else {
+      return false;
     }
   }
 
@@ -386,5 +554,27 @@ class DashboardViewModel extends BaseViewModel {
       onPressed: () => Get.back(),
       buttonText: "EXIT",
     );
+  }
+
+  @override
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
+  }
+
+  bool showPaginationEndedText() {
+    if (dealsList != null) {
+      if (dealsList!.isNotEmpty) {
+        if (dealsModel == null) {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
   }
 }

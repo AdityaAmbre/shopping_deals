@@ -75,22 +75,137 @@ class DashboardMobile extends StatelessWidget {
           ),
           Expanded(
             child: TabBarView(
-            controller: viewModel.tabController,
-            children: List.generate(
-              viewModel.tabList?.length ?? 0,
+              controller: viewModel.tabController,
+              children: List.generate(
+                viewModel.tabList?.length ?? 0,
                   (index) {
-                return Center(
-                  child: viewModel.isLoading
-                      ? const CircularProgressIndicator()
-                      : viewModel.dealsModel == null
-                        ? const Center(child: Text("No data found"))
-                        : Text(viewModel.tabList?[index] ?? ""),
-                );
-              },
+                    return (viewModel.isLoading && viewModel.dealsList!.isEmpty)
+                        ? const Center(child: CircularProgressIndicator())
+                        : viewModel.dealsModel == null
+                          ? const Center(child: Text("No data found"))
+                          : _displayDataWidget(context, viewModel);
+                },
+              ),
             ),
           ),
+          SizedBox(
+            child: viewModel.showPaginationLoader()
+                ? const Center(child: CircularProgressIndicator())
+                : viewModel.showPaginationEndedText()
+                  ? const Center(child: Padding(
+                    padding: EdgeInsets.all(4.0),
+                    child: Text("No data found."),
+                  ))
+                  : const SizedBox.shrink(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _displayDataWidget(BuildContext context, DashboardViewModel viewModel) {
+    return RefreshIndicator(
+      onRefresh: () => viewModel.onRefreshApiAction(),
+      child: ListView.builder(
+        controller: viewModel.scrollController,
+        itemCount: viewModel.dealsList?.length ?? 0,
+          itemBuilder: (context, index) => Padding(
+            padding: const EdgeInsets.all(2.0),
+            child: Container(
+              color: ResColors.white,
+              child: viewModel.showNewTabTapLoader()
+                ? const Center(child: CircularProgressIndicator())
+                : Card(
+                    elevation: 4.0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(1.0),
+                    ),
+                    child: Container(
+                      color: ResColors.white,
+                      child: ListTile(
+                        title: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Flexible(
+                                  flex: 1,
+                                    child: Image.network(
+                                      viewModel.dealsList?[index].imageMedium ?? "",
+                                      fit: BoxFit.contain,
+                                    ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  flex: 4,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text("ID: ${viewModel.dealsList?[index].id ?? ""}",
+                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                        ),
+                                        const SizedBox(height: 5.0),
+                                        Text("Milliseconds: ${viewModel.dealsList?[index].createdAtInMillis ?? ""}",
+                                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
+                                        ),
+                                      ],
+                                    ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Flexible(
+                                  flex: 1,
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.comment_sharp, color: ResColors.iconColor),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                          child: Text("${viewModel.dealsList?[index].commentsCount ?? ""}",
+                                            style: TextStyle(
+                                                color: ResColors.iconColor,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500
+                                            ),
+                                          ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Flexible(
+                                  flex: 4,
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.watch_later_outlined, color: ResColors.iconColor),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                            child: Text(viewModel.dealsList?[index].createdAt ?? "",
+                                              style: TextStyle(
+                                                  color: ResColors.iconColor,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500
+                                              ),
+                                            ),
+                                        ),
+                                      ],
+                                    ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        dense: false,
+                      ),
+                    ),
+                  ),
+            ),
+          ),
       ),
     );
   }

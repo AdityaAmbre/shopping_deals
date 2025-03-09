@@ -7,12 +7,19 @@ class Api {
   Api();
 
   /// API Call - HTTP GET
-  Future<Map<String, dynamic>?> apiCallHttpGet(String url, {Map<String, String>? headersList}) async {
+  Future<Map<String, dynamic>?> apiCallHttpGet({required String baseUrl, required int perPage, required int pageNumber, required String fields, Map<String, String>? headersList}) async {
     final Map<String, dynamic>? data;
 
     // Host URL
-    Logger.log("Host URL:", url);
-    final Uri hostUrl = Uri.parse(url);
+    Logger.log("Base URL:", baseUrl);
+    final Uri hostUrl = Uri.parse(baseUrl).replace(
+      queryParameters: {
+        "per_page": perPage.toString(),
+        "page": pageNumber.toString(),
+        "fields": fields.toString()
+      },
+    );
+    Logger.log("Host URL:", hostUrl.toString());
 
     // Headers
     final Map<String, String>? headers = headersList;
