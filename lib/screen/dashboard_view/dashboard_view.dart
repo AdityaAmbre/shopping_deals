@@ -19,7 +19,8 @@ class DashboardView extends StatelessWidget {
     return ViewModelBuilder.reactive(
       viewModelBuilder: () => DashboardViewModel(context),
       onViewModelReady: (viewModel) async {
-        viewModel.init();
+        final ticker = Navigator.of(context);
+        viewModel.init(ticker);
       },
       builder: (context, viewModel, child) {
         return ScreenTypeLayout.builder(

@@ -25,9 +25,13 @@ class SplashViewModel extends BaseViewModel {
   /// Re-direct to Dashboard Page
   Future<void> redirectToNextPage() async {
     Logger.log("SplashViewModel INIT", "redirectToNextPage");
-    Future.delayed(
+    toggleLoading();
+    await Future.delayed(
       const Duration(seconds: 2),
-      () => Get.to(const DashboardView())
+      () {
+        toggleLoading();
+        Get.offAll(const DashboardView());
+      },
     );
   }
 }

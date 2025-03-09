@@ -7,16 +7,20 @@ class Api {
   Api();
 
   /// API Call - HTTP GET
-  Future<Map<String, dynamic>?> apiCallHttpGet(String url) async {
-    Map<String, dynamic>? data;
+  Future<Map<String, dynamic>?> apiCallHttpGet(String url, {Map<String, String>? headersList}) async {
+    final Map<String, dynamic>? data;
 
     // Host URL
     Logger.log("Host URL:", url);
-    Uri hostUrl = Uri.parse(url);
+    final Uri hostUrl = Uri.parse(url);
+
+    // Headers
+    final Map<String, String>? headers = headersList;
+    Logger.log("Headers:", headers.toString());
 
     try {
       // API Call
-      final response = await http.get(hostUrl);
+      final response = await http.get(hostUrl, headers: headers);
 
       // Handle Response
       if (response.statusCode == 200) {

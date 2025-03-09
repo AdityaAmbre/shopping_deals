@@ -15,7 +15,7 @@ class Constant {
   static const String featuredThirdURL = "http://stagingauth.desidime.com/v4/home/discussed?per_page=10&page=1&fields=id,created_at,created_at_in_millis,image_medium,comments_count,store%7Bname";
 
   /// Headers
-  static const String headerKey = "X-Desidime-Client";
+  static String headerKey = "X-Desidime-Client";
   static const String headerValue = "08b4260e5585f282d1bd9d085e743fd9";
 
   /// About URLs

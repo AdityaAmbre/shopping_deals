@@ -19,13 +19,18 @@ class DashboardMobile extends StatelessWidget {
 
   AppBar _appBar(BuildContext context, DashboardViewModel viewModel) {
     return AppBar(
-      elevation: 4.0,
       backgroundColor: ResColors.primary,
       leading: TextButton(
         onPressed: () => viewModel.onMenuClick(scaffoldKey),
         child: Icon(Icons.menu_sharp, color: ResColors.white),
       ),
-      title: Text(Constant.deals, style: TextStyle(color: ResColors.white)),
+      title: Text(
+          Constant.deals,
+          style: TextStyle(
+            color: ResColors.white,
+            fontWeight: FontWeight.w600,
+          ),
+      ),
       actions: [
         TextButton(
           onPressed: () => viewModel.onSearchClick(),
@@ -39,7 +44,54 @@ class DashboardMobile extends StatelessWidget {
     return Container(
       color: ResColors.white,
       width: double.infinity,
-      child: const Center(child: Text("Dashboard")),
+      child: _tabBarLayout(context, viewModel),
+    );
+  }
+
+  Widget _tabBarLayout(BuildContext context, DashboardViewModel viewModel) {
+    return DefaultTabController(
+      length: viewModel.tabList?.length ?? 0,
+      initialIndex: 0,
+      child: Column(
+        children: [
+          Container(
+            color: ResColors.primary,
+            child: TabBar(
+              onTap: viewModel.onTabAction,
+              controller: viewModel.tabController,
+              indicatorColor: ResColors.deepOrange,
+              indicatorSize: TabBarIndicatorSize.tab,
+              unselectedLabelColor: ResColors.white,
+              labelColor: ResColors.white,
+              tabs: viewModel.tabList?.map((tab) => Tab(
+                child: Text(
+                  tab,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),).toList() ?? [],
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+            controller: viewModel.tabController,
+            children: List.generate(
+              viewModel.tabList?.length ?? 0,
+                  (index) {
+                return Center(
+                  child: viewModel.isLoading
+                      ? const CircularProgressIndicator()
+                      : viewModel.dealsModel == null
+                        ? const Center(child: Text("No data found"))
+                        : Text(viewModel.tabList?[index] ?? ""),
+                );
+              },
+            ),
+          ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -47,13 +99,13 @@ class DashboardMobile extends StatelessWidget {
     return Builder(
       builder: (context) {
         return Drawer(
+          elevation: 10.0,
           width: MediaQuery.of(context).size.width / 1.5,
           child: Column(
             children: [
               Material(
                 elevation: 4.0,
                 color: ResColors.primary,
-                shadowColor: ResColors.black,
                 child: SizedBox(
                   height: MediaQuery.of(context).size.width / 2.0,
                   width: double.infinity,
@@ -91,7 +143,7 @@ class DashboardMobile extends StatelessWidget {
                           style: TextStyle(
                             color: ResColors.white,
                             fontSize: 14,
-                            fontWeight: FontWeight.w300
+                            fontWeight: FontWeight.w400
                           ),
                         ),
                       ],
